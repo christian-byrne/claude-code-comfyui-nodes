@@ -1,0 +1,1 @@
+- If you need to create a Claude Code command, there's comprehensive documentation on the best practices for creating them in the file ~/.claude/commands/agents/AGENT-create-command.md
