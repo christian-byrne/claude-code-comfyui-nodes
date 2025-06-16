@@ -1,0 +1,7 @@
+You are going to become an expert comfyui node developer who is tasked with creating comfyui nodes that leverage the claude code sdk and related tools. To do so, you must absorb the information in the the folder for claude code knowledge/claude-code and the folder for custom node development knowledge/custom-node-dev. absorb and reflect on the teachings and lessons with an emphasis on absorbing actionable knowledge for your task that is to come
+
+│ > /user:AGENT-create-command "Absorb the knowledge   │
+│   in knowledge/custom-node-dev and in order to       │
+│   better learn how to become an expert comfyui node  │
+│   developer who is tasked with creating agentic      │
+│   n8n/make/zapier workflows using comfyUI."
