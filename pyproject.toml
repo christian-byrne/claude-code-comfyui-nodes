@@ -15,7 +15,6 @@ classifiers = []
 dependencies = [
     "claude-code-sdk>=0.1.0",
     "aiofiles>=23.0.0",
-    "asyncio>=3.4.3",
 ]
 
 

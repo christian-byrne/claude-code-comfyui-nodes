@@ -112,3 +112,4 @@ yarn-error.log*
 node.zip
 .vscode/
 .claude/
+.env

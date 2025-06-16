@@ -1,0 +1,14 @@
+# Claude Code ComfyUI Nodes Requirements
+
+# Core dependencies for Claude Code SDK integration (API version)
+claude-code-sdk
+aiofiles>=23.0.0
+
+# Standard library modules that should be available
+# asyncio is part of Python standard library since 3.4
+
+# Optional dependencies for development
+# pytest>=8.0.0
+# mypy>=1.0.0
+# ruff>=0.1.0
+# pre-commit>=3.5.0
