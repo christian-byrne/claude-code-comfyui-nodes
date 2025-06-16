@@ -1,67 +1,151 @@
 # Claude Code ComfyUI Nodes
 
-ComfyUI nodes for integrating Claude Code SDK - enables AI-powered code generation,
+ComfyUI nodes for integrating Claude Code SDK - enables AI-powered code generation, analysis, and assistance within ComfyUI workflows.
 
-> [!NOTE]
-> This projected was created with a [cookiecutter](https://github.com/Comfy-Org/cookiecutter-comfy-extension) template. It helps you start writing custom nodes without worrying about the Python setup.
+## Overview
 
-## Quickstart
+This node pack provides a stateless, command-based interface to Claude Code within ComfyUI. Unlike traditional chat interfaces, these nodes operate as single-shot commands, making them perfect for automation workflows similar to n8n, Zapier, or Make.
 
-1. Install [ComfyUI](https://docs.comfy.org/get_started).
-1. Install [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager)
-1. Look up this extension in ComfyUI-Manager. If you are installing manually, clone this repository under `ComfyUI/custom_nodes`.
-1. Restart ComfyUI.
+## Key Features
 
-# Features
+- **Stateless Command Execution**: Each node execution is independent, with explicit memory/context passing
+- **Folder-Based Output Management**: All outputs are organized in timestamped folders
+- **Context Chaining**: Convert previous outputs into memory for subsequent commands
+- **Argument Substitution**: Use variables in commands and memory (e.g., `${PROJECT_NAME}`)
+- **Tool Control**: Fine-grained control over which tools Claude can use
 
-- A list of features
+## Nodes
 
-## Develop
+### 1. Claude Code Command
 
-To install the dev dependencies and pre-commit (will run the ruff hook), do:
+The main execution node that runs Claude Code commands.
 
-```bash
-cd claude_code_comfyui_nodes
-pip install -e .[dev]
-pre-commit install
+**Inputs:**
+- `command`: The instruction/command for Claude to execute
+- `model`: Choose between "sonnet" or "opus" models
+- `max_turns`: Maximum iterations Claude can take (1-10)
+- `memory`: Optional context/memory (like CLAUDE.md content)
+- `arguments`: JSON object for variable substitution
+- `previous_output_folder`: Link to previous command's output
+- `allowed_tools`: Comma-separated list of allowed tools
+
+**Outputs:**
+- `output_folder`: Name of the folder containing all generated files
+- `claude_response`: Claude's final response text
+- `session_id`: Session ID for potential continuations
+- `execution_metadata`: JSON metadata about the execution
+
+### 2. Claude Code Reader
+
+Inspect and read files from Claude Code output folders.
+
+**Inputs:**
+- `output_folder`: Folder name from a ClaudeCodeCommand
+- `file_pattern`: Glob pattern for files (e.g., "*.py")
+- `read_mode`: "list_files", "read_all", or "read_specific"
+- `specific_file`: File to read in "read_specific" mode
+- `max_files`: Maximum files to read
+
+**Outputs:**
+- `file_contents`: The actual file contents
+- `file_list`: JSON list of files with metadata
+- `metadata`: Execution metadata from the folder
+
+### 3. Claude Code Context Builder
+
+Convert output folders into memory/context for chaining commands.
+
+**Inputs:**
+- `output_folder`: Folder to build context from
+- `context_mode`: How to build context ("full_content", "file_list", "summary", "custom")
+- `base_memory`: Existing memory to append to
+- `file_filter`: File extensions to include
+- `custom_template`: Custom context template
+- `max_file_size_kb`: Max file size to include
+
+**Outputs:**
+- `memory`: Formatted memory/context string
+
+## Installation
+
+1. Ensure you have ComfyUI installed
+2. Clone this repository into your `ComfyUI/custom_nodes` directory
+3. Choose your setup:
+
+### Option A: Claude Code Max Plan (Recommended)
+If you have a Claude Code Max Plan subscription:
+- Install Claude Code from https://claude.ai/code
+- The "Claude Code Command (Max Plan)" node will use your existing subscription
+- No API key needed, no per-token costs
+
+### Option B: Developer API
+If you want to use the Anthropic API directly:
+- Install dependencies: `pip install claude-code-sdk aiofiles`
+- Set your `ANTHROPIC_API_KEY` environment variable
+- Use the "Claude Code Command (API)" node
+- Pay per token based on API usage
+
+4. Restart ComfyUI
+
+## Usage Examples
+
+### Basic Command Execution
+
+1. Add a "Claude Code Command" node
+2. Enter your command, e.g.:
+   ```markdown
+   Create a Python script that generates fibonacci numbers.
+   Include error handling and type hints.
+   ```
+3. Set model to "sonnet" and max_turns to 3
+4. Execute the workflow
+5. Check the output folder for generated files
+
+### Chaining Commands
+
+1. First command generates code
+2. Connect output_folder to a "Claude Code Context Builder"
+3. Connect the memory output to a second "Claude Code Command"
+4. The second command can reference and build upon the first
+
+### Using Arguments
+
+Set arguments as JSON:
+```json
+{
+  "PROJECT_NAME": "MyAwesomeProject",
+  "LANGUAGE": "Python"
+}
 ```
 
-The `-e` flag above will result in a "live" install, in the sense that any changes you make to your node extension will automatically be picked up the next time you run ComfyUI.
-
-## Publish to Github
-
-Install Github Desktop or follow these [instructions](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) for ssh.
-
-1. Create a Github repository that matches the directory name. 
-2. Push the files to Git
+Then use in your command:
+```markdown
+Create a ${LANGUAGE} project structure for ${PROJECT_NAME}.
+Include README, tests, and proper package structure.
 ```
-git add .
-git commit -m "project scaffolding"
-git push
-``` 
 
-## Writing custom nodes
+## Output Organization
 
-An example custom node is located in [node.py](src/claude_code_comfyui_nodes/nodes.py). To learn more, read the [docs](https://docs.comfy.org/essentials/custom_node_overview).
+All outputs are stored in `claude_code_outputs/` with the structure:
+```
+claude_code_outputs/
+├── output_20240615_143022_a1b2c3d4/
+│   ├── _claude_code_metadata.json
+│   ├── generated_script.py
+│   └── README.md
+└── output_20240615_144512_e5f6g7h8/
+    ├── _claude_code_metadata.json
+    └── refactored_code.py
+```
 
+## Best Practices
 
-## Tests
+1. **Be Specific**: Clear, detailed commands produce better results
+2. **Use Context**: Chain commands together for complex workflows
+3. **Manage Tools**: Only enable tools that are needed for security
+4. **Check Outputs**: Use the Reader node to verify generated content
+5. **Template Commands**: Save frequently used commands as text files
 
-This repo contains unit tests written in Pytest in the `tests/` directory. It is recommended to unit test your custom node.
+## License
 
-- [build-pipeline.yml](.github/workflows/build-pipeline.yml) will run pytest and linter on any open PRs
-- [validate.yml](.github/workflows/validate.yml) will run [node-diff](https://github.com/Comfy-Org/node-diff) to check for breaking changes
-
-## Publishing to Registry
-
-If you wish to share this custom node with others in the community, you can publish it to the registry. We've already auto-populated some fields in `pyproject.toml` under `tool.comfy`, but please double-check that they are correct.
-
-You need to make an account on https://registry.comfy.org and create an API key token.
-
-- [ ] Go to the [registry](https://registry.comfy.org). Login and create a publisher id (everything after the `@` sign on your registry profile). 
-- [ ] Add the publisher id into the pyproject.toml file.
-- [ ] Create an api key on the Registry for publishing from Github. [Instructions](https://docs.comfy.org/registry/publishing#create-an-api-key-for-publishing).
-- [ ] Add it to your Github Repository Secrets as `REGISTRY_ACCESS_TOKEN`.
-
-A Github action will run on every git push. You can also run the Github action manually. Full instructions [here](https://docs.comfy.org/registry/publishing). Join our [discord](https://discord.com/invite/comfyorg) if you have any questions!
-
+GNU General Public License v3
