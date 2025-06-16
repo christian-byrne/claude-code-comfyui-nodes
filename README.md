@@ -2,6 +2,8 @@
 
 ComfyUI nodes for integrating Claude Code SDK - enables AI-powered code generation, analysis, and assistance within ComfyUI workflows.
 
+![Claude Code ComfyUI Nodes](https://github.com/user-attachments/assets/a62f5c4a-29f8-47e2-be2f-38868aaa7689)
+
 ## Overview
 
 This node pack provides a stateless, command-based interface to Claude Code within ComfyUI. Unlike traditional chat interfaces, these nodes operate as single-shot commands, making them perfect for automation workflows similar to n8n, Zapier, or Make.
