@@ -1,1 +1,2 @@
-- If you need to create a Claude Code command, there's comprehensive documentation on the best practices for creating them in the file ~/.claude/commands/agents/AGENT-create-command.md
+-   If you need to create a Claude Code command, there's comprehensive documentation on the best practices for creating them in the file ~/.claude/commands/agents/AGENT-create-command.md
+-   To learn how to configure MCP servers for some specific tools, check the file ~/.claude/restore-mcps.sh

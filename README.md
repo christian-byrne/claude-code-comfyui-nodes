@@ -15,27 +15,31 @@ This node pack provides a stateless, command-based interface to Claude Code with
 - **Context Chaining**: Convert previous outputs into memory for subsequent commands
 - **Argument Substitution**: Use variables in commands and memory (e.g., `${PROJECT_NAME}`)
 - **Tool Control**: Fine-grained control over which tools Claude can use
+- **Command Library**: Pre-built commands in dropdown menu for common tasks
+- **Memory Templates**: Reusable context files for consistent workflows
 
 ## Nodes
 
-### 1. Claude Code Command
+### 1. Claude Code Execute
 
 The main execution node that runs Claude Code commands.
 
 **Inputs:**
-- `command`: The instruction/command for Claude to execute
-- `model`: Choose between "sonnet" or "opus" models
-- `max_turns`: Maximum iterations Claude can take (1-10)
-- `memory`: Optional context/memory (like CLAUDE.md content)
-- `arguments`: JSON object for variable substitution
-- `previous_output_folder`: Link to previous command's output
-- `allowed_tools`: Comma-separated list of allowed tools
+- `command_source`: Choose between "file" (dropdown) or "text" (custom)
+- `command_file`: Dropdown of commands from `/commands` folder
+- `command`: Custom command text (when not using file)
+- `model`: Choose between "default", "sonnet" or "opus" models
+- `max_turns`: Maximum iterations Claude can take (1-512)
+- `memory`: Optional context from Memory Builder node
+- `arguments`: Arguments from Arguments Builder node
+- `tools`: Tool configuration from Tools Config node
+- `previous_output`: Output from previous execution
+- `mcp_config`: MCP configuration from MCP Manager
 
 **Outputs:**
-- `output_folder`: Name of the folder containing all generated files
-- `claude_response`: Claude's final response text
-- `session_id`: Session ID for potential continuations
-- `execution_metadata`: JSON metadata about the execution
+- `output`: CLAUDE_OUTPUT for chaining
+- `response`: Claude's final response text
+- `metadata`: JSON metadata about the execution
 
 ### 2. Claude Code Reader
 
@@ -68,6 +72,84 @@ Convert output folders into memory/context for chaining commands.
 **Outputs:**
 - `memory`: Formatted memory/context string
 
+### 4. Claude Memory Builder
+
+Build memory/context from various sources including dropdown selection.
+
+**Inputs:**
+- `memory_type`: "text", "file", "memory_file", "claude_md", or "combined"
+- `memory_file`: Dropdown of files from `/memories` folder
+- `text_memory`: Direct text input
+- `file_path`: Path to any file
+- `claude_md_content`: CLAUDE.md formatted content
+- `append_to`: Previous memory to append to
+
+**Outputs:**
+- `memory`: CLAUDE_MEMORY for chaining
+- `memory_text`: Plain text version
+
+### 5. Claude Arguments Builder
+
+Build arguments for variable substitution in commands.
+
+**Inputs:**
+- `arguments`: JSON object with key-value pairs
+- `append_to`: Previous arguments to merge with
+
+**Outputs:**
+- `arguments`: CLAUDE_ARGUMENTS for chaining
+- `arguments_json`: JSON string
+
+### 6. Claude Tools Config
+
+Configure which tools Claude can use.
+
+**Inputs:**
+- `preset`: Tool presets (all, read_only, file_ops, code_dev, web, minimal, none)
+- `custom_tools`: Additional tools to add
+- `remove_tools`: Tools to remove from preset
+- Various boolean toggles for tool categories
+- `skip_permissions`: Skip permission prompts
+
+**Outputs:**
+- `tools`: CLAUDE_TOOLS configuration
+- `tools_list`: Comma-separated tool list
+- `skip_permissions`: Boolean flag
+
+### 7. Claude MCP Manager
+
+Configure Model Context Protocol servers.
+
+**Inputs:**
+- `action`: list, enable, disable, or config
+- `mcp_name`: Name of MCP server
+- `mcp_config`: JSON configuration
+- `list_format`: Output format for listing
+
+**Outputs:**
+- `mcp_info`: Status information
+- `mcp_config`: MCP_CONFIG for chaining
+- `mcp_data`: Raw MCP data
+
+### 8. Claude Reddit Scraper
+
+Scrape Reddit posts and comments using Playwright MCP.
+
+**Inputs:**
+- `source_type`: url, subreddit, search, or user
+- `source`: Reddit URL or search term
+- `scrape_mode`: comments, posts, both, or metadata
+- `max_items`: Maximum items to scrape
+- `sort_by`: Sort order for posts
+- `include_metadata`: Include detailed metadata
+- `max_comment_depth`: Thread depth to scrape
+
+**Outputs:**
+- `output`: CLAUDE_OUTPUT for chaining
+- `scraped_data`: JSON data
+- `summary`: Text summary
+- `item_count`: Number of items scraped
+
 ## Installation
 
 1. Ensure you have ComfyUI installed
@@ -93,22 +175,39 @@ If you want to use the Anthropic API directly:
 
 ### Basic Command Execution
 
-1. Add a "Claude Code Command" node
-2. Enter your command, e.g.:
+1. Add a "Claude Code Execute" node
+2. Set `command_source` to "file" and select a command from dropdown
+   OR set to "text" and enter custom command:
    ```markdown
    Create a Python script that generates fibonacci numbers.
    Include error handling and type hints.
    ```
-3. Set model to "sonnet" and max_turns to 3
+3. Set model to "sonnet" and max_turns to 8
 4. Execute the workflow
 5. Check the output folder for generated files
 
+### Using Command and Memory Files
+
+1. Place command files in `/commands` folder (`.md` or `.txt`)
+2. Place memory/context files in `/memories` folder
+3. Use dropdowns in Execute and Memory Builder nodes
+4. Combine with Arguments Builder for dynamic values
+
+### Reddit to Video Workflow
+
+1. Add "Claude Reddit Scraper" node
+   - Set source to "programming" 
+   - Set scrape_mode to "comments"
+2. Connect output to "Claude Code Execute" node
+3. Select "reddit-video-script-simple.md" from command dropdown
+4. Execute to generate TikTok/YouTube script
+
 ### Chaining Commands
 
-1. First command generates code
-2. Connect output_folder to a "Claude Code Context Builder"
-3. Connect the memory output to a second "Claude Code Command"
-4. The second command can reference and build upon the first
+1. First Execute node generates code
+2. Connect output to "Claude Code Context Builder"
+3. Connect memory output to second Execute node
+4. Second command references and builds upon the first
 
 ### Using Arguments
 
@@ -126,19 +225,28 @@ Create a ${LANGUAGE} project structure for ${PROJECT_NAME}.
 Include README, tests, and proper package structure.
 ```
 
+## Folder Structure
+
+```
+claude-code-comfyui-nodes/
+├── commands/                    # Command library (dropdown in Execute node)
+│   ├── reddit-video-script-simple.md
+│   └── your-custom-command.md
+├── memories/                    # Memory templates (dropdown in Memory node)
+│   ├── reddit-video-context.md
+│   └── your-project-context.md
+├── claude_code_outputs/         # All execution outputs
+│   ├── output_20240615_143022/
+│   └── reddit_scrape_20240615/
+└── src/                        # Node implementations
+```
+
 ## Output Organization
 
-All outputs are stored in `claude_code_outputs/` with the structure:
-```
-claude_code_outputs/
-├── output_20240615_143022_a1b2c3d4/
-│   ├── _claude_code_metadata.json
-│   ├── generated_script.py
-│   └── README.md
-└── output_20240615_144512_e5f6g7h8/
-    ├── _claude_code_metadata.json
-    └── refactored_code.py
-```
+All outputs are stored in `claude_code_outputs/` with timestamped folders:
+- Execute node: `output_YYYYMMDD_HHMMSS_[id]`
+- Reddit scraper: `reddit_scrape_YYYYMMDD_HHMMSS_[id]`
+- Each folder contains generated files and `_claude_code_metadata.json`
 
 ## Best Practices
 
