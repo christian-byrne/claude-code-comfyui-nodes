@@ -15,34 +15,37 @@ from .claude_code_mcp import ClaudeCodeMCP
 from .claude_code_reader import ClaudeCodeReader
 from .claude_code_context import ClaudeCodeContext
 
+# Scraper nodes
+from .claude_reddit_scraper import ClaudeRedditScraper
+
 # Node class mappings
 NODE_CLASS_MAPPINGS = {
     # Core nodes
     "ClaudeCodeExecute": ClaudeCodeExecute,
-    
     # Helper nodes
     "ClaudeCodeMemory": ClaudeCodeMemory,
     "ClaudeCodeArguments": ClaudeCodeArguments,
     "ClaudeCodeTools": ClaudeCodeTools,
     "ClaudeCodeMCP": ClaudeCodeMCP,
-    
     # Utility nodes
     "ClaudeCodeReader": ClaudeCodeReader,
     "ClaudeCodeContext": ClaudeCodeContext,
+    # Scraper nodes
+    "ClaudeRedditScraper": ClaudeRedditScraper,
 }
 
 # Display name mappings
 NODE_DISPLAY_NAME_MAPPINGS = {
     # Core nodes
     "ClaudeCodeExecute": "Claude Code Execute",
-    
     # Helper nodes
     "ClaudeCodeMemory": "Claude Memory Builder",
     "ClaudeCodeArguments": "Claude Arguments Builder",
     "ClaudeCodeTools": "Claude Tools Config",
     "ClaudeCodeMCP": "Claude MCP Manager",
-    
     # Utility nodes
     "ClaudeCodeReader": "Claude Output Reader",
     "ClaudeCodeContext": "Claude Context Builder",
+    # Scraper nodes
+    "ClaudeRedditScraper": "Claude Reddit Scraper",
 }

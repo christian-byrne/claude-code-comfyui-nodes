@@ -20,13 +20,34 @@ class ClaudeCodeExecute:
     CATEGORY = "claude_code"
     
     @classmethod
+    def get_command_files(cls):
+        """Get list of command files from the commands folder."""
+        commands_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "commands")
+        command_files = ["[Custom Command]"]  # Option for custom text input
+        
+        if os.path.exists(commands_dir):
+            for file in sorted(os.listdir(commands_dir)):
+                if file.endswith('.md') or file.endswith('.txt'):
+                    command_files.append(file)
+        
+        return command_files
+    
+    @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "command_source": (["file", "text"], {
+                    "default": "file",
+                    "tooltip": "Use command from file or custom text"
+                }),
+                "command_file": (cls.get_command_files(), {
+                    "default": "[Custom Command]",
+                    "tooltip": "Select a command file from the commands folder"
+                }),
                 "command": ("STRING", {
                     "multiline": True,
                     "default": "# Claude Code Command\n\nYour command instructions here...",
-                    "tooltip": "The command/instructions for Claude Code to execute"
+                    "tooltip": "Custom command (used when command_source is 'text' or file is '[Custom Command]')"
                 }),
                 "model": (["default", "sonnet", "opus"], {
                     "default": "default",
@@ -150,8 +171,27 @@ class ClaudeCodeExecute:
         
         return errors
     
+    def load_command_from_file(self, command_file: str) -> str:
+        """Load command from file in commands folder."""
+        if command_file == "[Custom Command]":
+            return None
+            
+        commands_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "commands")
+        file_path = os.path.join(commands_dir, command_file)
+        
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            except Exception as e:
+                return f"Error reading command file: {str(e)}"
+        
+        return None
+    
     def execute(
         self,
+        command_source: str,
+        command_file: str,
         command: str,
         model: str,
         max_turns: int,
@@ -165,6 +205,15 @@ class ClaudeCodeExecute:
         """Execute Claude Code command with progress reporting."""
         
         self.send_progress("Initializing Claude Code execution...", unique_id)
+        
+        # Load command from file if specified
+        if command_source == "file" and command_file != "[Custom Command]":
+            loaded_command = self.load_command_from_file(command_file)
+            if loaded_command:
+                command = loaded_command
+                self.send_progress(f"Loaded command from: {command_file}", unique_id)
+            else:
+                self.send_progress(f"Failed to load command file, using custom command", unique_id)
         
         # Replace arguments in command and memory
         command = self.replace_arguments(command, arguments)
